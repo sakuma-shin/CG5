@@ -63,12 +63,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// 頂点シェーダーの読み込みとコンパイル
 	Shader vs;
-	vs.Load(L"TestVS.hlsl", "vs_5_0");
+	vs.Load(L"Resources/Shaders/TestVS.hlsl", "vs_5_0");
 	assert(vs.GetBlob() != nullptr);
 
 	// ピクセルシェーダーの読み込みとコンパイル
 	Shader ps;
-	ps.Load(L"TestPS.hlsl", "ps_5_0");
+	ps.Load(L"Resources/Shaders/TestPS.hlsl", "ps_5_0");
 	assert(ps.GetBlob() != nullptr);
 
 	// PSO(PipelineStateObject)の生成
