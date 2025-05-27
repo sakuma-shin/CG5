@@ -3,6 +3,7 @@
 #include<d3d12.h>
 #include <d3dcompiler.h>
 #include<dxcapi.h>
+#pragma comment(lib, "dxcompiler.lib")
 
 class Shader {
 public:
@@ -12,6 +13,8 @@ public:
 
 	//生成したコンパイル済みデータを取得する
 	ID3DBlob* GetBlob();
+	IDxcBlob* GetDxcBlob();
+
 
 	//コンストラクタ
 	Shader();
@@ -21,5 +24,6 @@ public:
 
 	private:
 	ID3DBlob* blob_ = nullptr;
+	IDxcBlob* dxcBlob_ = nullptr;
 
 };
