@@ -7,7 +7,7 @@
 using namespace KamataEngine;
 
 //関数プロトタイプ宣言
-void SetupPipeLineState(PipelineState& pipelineState, RootSignature rs, Shader& vs, Shader& ps);
+void SetupPipeLineState(PipelineState& pipelineState, RootSignature& rs, Shader& vs, Shader& ps);
 
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -155,7 +155,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	return 0;
 }
 
-void SetupPipeLineState(PipelineState& pipelineState, RootSignature rs, Shader& vs, Shader& ps) {
+void SetupPipeLineState(PipelineState& pipelineState, RootSignature& rs, Shader& vs, Shader& ps) {
 	// inputLayout
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[1] = {};
 	inputElementDescs[0].SemanticName = "POSITION";
