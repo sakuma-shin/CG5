@@ -42,6 +42,7 @@ void RootSignature::Create() {
 	
 }
 
+
 ID3D12RootSignature* RootSignature::Get() { return rootSignature_; }
 
 RootSignature::RootSignature() {}
@@ -50,6 +51,5 @@ RootSignature::~RootSignature() {
 	if (rootSignature_){
 		rootSignature_->Release();
 		rootSignature_ = nullptr;
-
 	} 
 }
