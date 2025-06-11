@@ -2,6 +2,7 @@
 #include "KamataEngine.h"
 
 #include <cassert>
+#include "IndexBuffer.h"
 
 using namespace KamataEngine;
 
