@@ -1,9 +1,11 @@
+#include"Test.hlsli"
+
 struct PixelShaderOutPut
 {
     float32_t4 color : SV_TARGET0;
 };
 
-PixelShaderOutPut main()
+PixelShaderOutPut main(VertexShaderOutput input)
 {
     PixelShaderOutPut output;
     output.color =float32_t4(1.0f, 1.0f, 1.0f, 1.0f);
