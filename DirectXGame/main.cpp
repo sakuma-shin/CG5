@@ -10,6 +10,8 @@ using namespace KamataEngine;
 
 // 関数プロトタイプ宣言
 void SetupPipeLineState(PipelineState& pipelineState, RootSignature& rs, Shader& vs, Shader& ps);
+//RenderTexTureResourceの生成
+ID3D12Resource* CreateRenderTextureResource(ID3D12Device* device, uint32_t width, uint32_t height, DXGI_FORMAT format, const FLOAT* clearColor);
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -171,4 +173,29 @@ void SetupPipeLineState(PipelineState& pipelineState, RootSignature& rs, Shader&
 
 	// 準備が整ったのでPSOを生成する
 	pipelineState.Create(graphicsPipelineStateDesc);
+}
+
+ID3D12Resource* CreateRenderTextureResource(ID3D12Device* device, uint32_t width, uint32_t height, DXGI_FORMAT format, const FLOAT* clearColor) {
+	//1,生成するRenderTextureのDescの設定
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Width = UINT(width);		//RenderTextureの幅
+	resourceDesc.Height = UINT(height);		//Textureの高さ
+	resourceDesc.MipLevels = 1;				//mipmapの数
+	resourceDesc.DepthOrArraySize = 1;		//奥行き or 配列Textureの配列数
+	resourceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//Textureのformat
+	resourceDesc.SampleDesc.Count = 1;					//サンプリングカウント 1固定
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; //Textureの次元数。普段使っているのは二次元
+	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;//RenderTargetとして使う通知
+	//2.利用するHeapの設定
+	D3D12_HEAP_PROPERTIES heapPropaties{};
+	heapPropaties.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+	//3,ClearValueの用意
+	D3D12_CLEAR_VALUE clearValue;
+	clearValue.Format = format;
+	clearValue.Color[0] = clearColor[0];
+	clearValue.Color[1] = clearColor[1];
+	clearValue.Color[2] = clearColor[2];
+	clearValue.Color[3] = clearColor[3];
+	return nullptr; 
 }
