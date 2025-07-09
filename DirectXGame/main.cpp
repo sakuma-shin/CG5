@@ -42,7 +42,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// ピクセルシェーダーの読み込みとコンパイル
 	Shader ps;
-	ps.LoadDxc(L"Resources/shaders/TestPS.hlsl", L"ps_6_0");
+	ps.LoadDxc(L"Resources/shaders/VignettePS.hlsl", L"ps_6_0");
 	assert(ps.GetDxcBlob() != nullptr);
 
 	// pipelineStateの作成
@@ -189,9 +189,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		if (KamataEngine::Update()) {
 			break;
 		}
-		//world変換行列の定数バッファへの転送
-		worldTransform.rotation_.y += 0.005f;
-		worldTransform.UpdateMatrix();
+		////world変換行列の定数バッファへの転送
+		//worldTransform.rotation_.y += 0.005f;
+		//worldTransform.UpdateMatrix();
 
 		//Cameraの更新と定数バッファへの転送
 		camera.UpdateMatrix();

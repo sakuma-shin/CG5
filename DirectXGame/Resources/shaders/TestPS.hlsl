@@ -18,5 +18,6 @@ PixelShaderOutPut main(VertexShaderOutput input)
     //Grayscale
     float32_t value = dot(textureColor.rgb, float32_t3(0.2125f, 0.7154f, 0.0721f));
     output.color = float32_t4(value, value, value, textureColor.a);
+    output.color.rgb = value * float32_t3(1.0f, 74.0f / 107.0f, 43.0f / 107.0f);
     return output;
 }
