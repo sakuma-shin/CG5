@@ -42,7 +42,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// ピクセルシェーダーの読み込みとコンパイル
 
-	const int kNumPS = 6;
+	const int kNumPS = 7;
 	Shader ps[kNumPS];
 	const std::wstring PS[kNumPS] = {
 	    L"Resources/shaders/TestPS.hlsl",
@@ -51,6 +51,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	    L"Resources/shaders/BoxFilterPS.hlsl",
 		L"Resources/shaders/GaussianFilterPS.hlsl", 
 		L"Resources/shaders/LuminanceBasedOutlinePS.hlsl",
+	    L"Resources/shaders/RadialBlurPS.hlsl",
 	};
 	// pipelineStateの作成
 	PipelineState pipelineState[kNumPS];
