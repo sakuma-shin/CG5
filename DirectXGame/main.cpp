@@ -152,7 +152,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// 2.DSV用のViewの生成
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 
 	// DSVheapの先頭にDSVを作る
@@ -244,9 +244,20 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier.Transition.pResource = renderTextureResource;
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		commandList->ResourceBarrier(1, &barrier);
+		
+
+		D3D12_RESOURCE_BARRIER depthBarrier{};
+		depthBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		depthBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		depthBarrier.Transition.pResource = depthStencilResource;
+		depthBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		depthBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	
+		
+		commandList->ResourceBarrier(1, &depthBarrier);
 
 		// 描画先のRTVとDSVを設定する
 		commandList->OMSetRenderTargets(1, &rtvHandleCPU, false, &dsvHandleCPU);
@@ -289,6 +300,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		commandList->ResourceBarrier(1, &barrier);
+
+		depthBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		depthBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		depthBarrier.Transition.pResource = depthStencilResource;
+		depthBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		depthBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	
+		commandList->ResourceBarrier(1, &depthBarrier);
 
 		dxCommon->PreDraw();
 		// コマンドを積む
@@ -418,7 +437,7 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	resourceDesc.Height = height;                // Textureの高さ
 	resourceDesc.MipLevels = 1;                  // mipmapの数 DepthStencilなので一つで良い
 	resourceDesc.DepthOrArraySize = 1;           // Textureの配列数　DepthStencilなので一つで良い
-	resourceDesc.Format = DXGI_FORMAT_D32_FLOAT; // DepthStencilとして利用可能なフォーマット
+	resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // DepthStencilとして利用可能なフォーマット
 
 	resourceDesc.SampleDesc.Count = 1;                            // サンプリングカウント
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;  // 二次元
@@ -432,7 +451,7 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	// 深度地のクリア設定
 	D3D12_CLEAR_VALUE depthClearValue{};
 	depthClearValue.DepthStencil.Depth = 1.0f;
-	depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	// 3.Resourceの生成
 	ID3D12Resource* resource = nullptr;
