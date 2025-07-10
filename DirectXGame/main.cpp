@@ -42,7 +42,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// ピクセルシェーダーの読み込みとコンパイル
 
-	const int kNumPS = 6;
+	const int kNumPS = 7;
 	Shader ps[kNumPS];
 	const std::wstring PS[kNumPS] = {
 	    L"Resources/shaders/TestPS.hlsl",
@@ -51,6 +51,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	    L"Resources/shaders/BoxFilterPS.hlsl",
 		L"Resources/shaders/GaussianFilterPS.hlsl", 
 		L"Resources/shaders/LuminanceBasedOutlinePS.hlsl",
+	    L"Resources/shaders/DepthBasedOutlinePS.hlsl",
 	};
 	// pipelineStateの作成
 	PipelineState pipelineState[kNumPS];
@@ -164,7 +165,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_DESCRIPTOR_HEAP_DESC srvDescriptorHeapDesc = {};
 	srvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	srvDescriptorHeapDesc.NumDescriptors = 1;
+	srvDescriptorHeapDesc.NumDescriptors = 2;
 
 	hr = device->CreateDescriptorHeap(&srvDescriptorHeapDesc, IID_PPV_ARGS(&srvDescriptorHeap));
 	assert(SUCCEEDED(hr));
@@ -184,6 +185,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	srvDesc.Texture2D.MipLevels = 1;
 
 	device->CreateShaderResourceView(renderTextureResource, &srvDesc, srvHandleCPU);
+
+	
+	depthSrvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	depthSrvHandleGPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 
 	// 2.SRV(Shader Resource View)の作成
 	D3D12_SHADER_RESOURCE_VIEW_DESC depthTextureSrvDesc{};
@@ -460,7 +467,7 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 
 	// 3.Resourceの生成
 	ID3D12Resource* resource = nullptr;
-	HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, IID_PPV_ARGS(&resource));
+	HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, &depthClearValue, IID_PPV_ARGS(&resource));
 
 	assert(SUCCEEDED(hr));
 
