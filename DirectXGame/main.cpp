@@ -173,6 +173,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCPU = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGPU = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
+	D3D12_CPU_DESCRIPTOR_HANDLE depthSrvHandleCPU = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE depthSrvHandleGPU = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
 	// 2.SRV(Shader Resource View)の作成
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
@@ -189,7 +192,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	depthTextureSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	depthTextureSrvDesc.Texture2D.MipLevels = 1;
 
-	device->CreateShaderResourceView(depthStencilResource, &depthTextureSrvDesc, dsvHandleCPU);
+	device->CreateShaderResourceView(depthStencilResource, &depthTextureSrvDesc, depthSrvHandleCPU);
 
 	// アプリで利用する3Dモデル
 	// 被写体の準備
