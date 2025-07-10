@@ -152,7 +152,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// 2.DSV用のViewの生成
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsvDesc.Format =  DXGI_FORMAT_D32_FLOAT;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 
 	// DSVheapの先頭にDSVを作る
@@ -187,7 +187,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// 2.SRV(Shader Resource View)の作成
 	D3D12_SHADER_RESOURCE_VIEW_DESC depthTextureSrvDesc{};
-	depthTextureSrvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	depthTextureSrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 	depthTextureSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	depthTextureSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	depthTextureSrvDesc.Texture2D.MipLevels = 1;
@@ -318,10 +318,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// 使用するディスクリプタヒープの設定
-		commandList->SetDescriptorHeaps(srvDescriptorHeap->GetDesc().NumDescriptors, &srvDescriptorHeap);
+		// srvDescriptorHeapとdsvDescriptorHeapを両方設定しようとするとエラーになるため、srvDescriptorHeapのみを設定
+		ID3D12DescriptorHeap* ppHeaps[] = {srvDescriptorHeap};
+		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 		// SRVのDescriptorTableの先頭を設定
 		commandList->SetGraphicsRootDescriptorTable(0, srvHandleGPU);
+
+		
 
 		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 
@@ -437,7 +441,8 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	resourceDesc.Height = height;                // Textureの高さ
 	resourceDesc.MipLevels = 1;                  // mipmapの数 DepthStencilなので一つで良い
 	resourceDesc.DepthOrArraySize = 1;           // Textureの配列数　DepthStencilなので一つで良い
-	resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // DepthStencilとして利用可能なフォーマット
+	resourceDesc.Format = DXGI_FORMAT_D32_FLOAT;
+ // DepthStencilとして利用可能なフォーマット
 
 	resourceDesc.SampleDesc.Count = 1;                            // サンプリングカウント
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;  // 二次元
@@ -451,7 +456,7 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	// 深度地のクリア設定
 	D3D12_CLEAR_VALUE depthClearValue{};
 	depthClearValue.DepthStencil.Depth = 1.0f;
-	depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
 
 	// 3.Resourceの生成
 	ID3D12Resource* resource = nullptr;
