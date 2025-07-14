@@ -3,11 +3,17 @@
 #include "RootSignature.h"
 #include "Shader.h"
 #include "VertexBuffer.h"
+#include "ConstantBuffer.h"
 #include "WorldTransformEX.h"
 #include "kamataEngine.h"
 #include <Windows.h>
 
 using namespace KamataEngine;
+using namespace MathUtility;
+
+struct ViewData {
+	Matrix4x4 InverseProjection;
+};
 
 // 関数プロトタイプ宣言
 void SetupPipeLineState(PipelineState& pipelineState, RootSignature& rs, Shader& vs, Shader& ps);
@@ -151,6 +157,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// CPU側から見たHandleを取得しておく
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandleCPU = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
+	//// CPU側から見たHandleを取得しておく
+	//D3D12_GPU_DESCRIPTOR_HANDLE dsvHandleGPU = dsvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
 	// 2.DSV用のViewの生成
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Format =  DXGI_FORMAT_D32_FLOAT;
@@ -165,7 +174,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_DESCRIPTOR_HEAP_DESC srvDescriptorHeapDesc = {};
 	srvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	srvDescriptorHeapDesc.NumDescriptors = 2;
+	srvDescriptorHeapDesc.NumDescriptors = 3;
 
 	hr = device->CreateDescriptorHeap(&srvDescriptorHeapDesc, IID_PPV_ARGS(&srvDescriptorHeap));
 	assert(SUCCEEDED(hr));
@@ -189,8 +198,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	
 	depthSrvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	depthSrvHandleGPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 
 	// 2.SRV(Shader Resource View)の作成
 	D3D12_SHADER_RESOURCE_VIEW_DESC depthTextureSrvDesc{};
@@ -200,6 +207,23 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	depthTextureSrvDesc.Texture2D.MipLevels = 1;
 
 	device->CreateShaderResourceView(depthStencilResource, &depthTextureSrvDesc, depthSrvHandleCPU);
+
+
+	// CBVのためにCPUハンドルをインクリメント
+	srvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE cbvHandleCPU = srvHandleCPU;
+	cbvHandleCPU.ptr +=device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	ConstantBuffer cbViewData;
+	
+	cbViewData.Create(sizeof(ViewData));
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+	cbvDesc.BufferLocation = cbViewData.GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = (sizeof(ViewData) + 255) & ~255; // 256バイト境界に揃える
+
+	device->CreateConstantBufferView(&cbvDesc, cbvHandleCPU);
 
 	// アプリで利用する3Dモデル
 	// 被写体の準備
@@ -213,6 +237,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Camera camera;
 	camera.Initialize();
 	camera.translation_ = Vector3(0.0f, 1.0f, 0.0f);
+
+	
+
 
 	KamataEngine::Input* input = Input::GetInstance();
 	int usePS = 0;
@@ -238,11 +265,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		}
 
 		////world変換行列の定数バッファへの転送
-		// worldTransform.rotation_.y += 0.005f;
-		// worldTransform.UpdateMatrix();
+		 worldTransform.rotation_.y += 0.005f;
+		 worldTransform.UpdateMatrix();
 
 		// Cameraの更新と定数バッファへの転送
 		camera.UpdateMatrix();
+		camera.UpdateProjectionMatrix();
+
+		Matrix4x4 projMatrix = camera.matProjection;
+		Matrix4x4 inverseProjMatrix = Inverse(projMatrix); // 自前のInverse関数を使う
+
+		ViewData* viewData = reinterpret_cast<ViewData*>(cbViewData.Map());
+		viewData->InverseProjection = Transpose(inverseProjMatrix); // HLSL向けに転置
 
 		// 描画開始
 
@@ -329,11 +363,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ID3D12DescriptorHeap* ppHeaps[] = {srvDescriptorHeap};
 		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-		// SRVのDescriptorTableの先頭を設定
-		commandList->SetGraphicsRootDescriptorTable(0, srvHandleGPU);
-
-		
-
+		// SRVのDescriptorTableの先頭を設定 (これでt0とt1の両方をカバーします)
+		commandList->SetGraphicsRootDescriptorTable(0, srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		commandList->SetGraphicsRootConstantBufferView(1, cbViewData.GetGPUVirtualAddress()); // これはb0用です
 		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 
 		// 描画終了
@@ -398,6 +430,15 @@ void SetupPipeLineState(PipelineState& pipelineState, RootSignature& rs, Shader&
 	// どのように画面に色を打ち込むかの設定(今は気にしなくていい)
 	graphicsPipelineStateDesc.SampleDesc.Count = 1;
 	graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+
+	// DepthStencilState
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+	depthStencilDesc.DepthEnable = true;
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
+	graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT; //
+
 
 	// 準備が整ったのでPSOを生成する
 	pipelineState.Create(graphicsPipelineStateDesc);

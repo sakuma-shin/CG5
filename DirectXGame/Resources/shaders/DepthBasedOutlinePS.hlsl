@@ -1,10 +1,17 @@
 #include"Test.hlsli"
 
+struct InverseProjectionCBuffer
+{
+    float32_t4x4 inverseProjection;
+};
+
 Texture2D<float32_t4> gTexture : register(t0); //SRV register=>t
 SamplerState gSampler : register(s0); //Sampler register=>s
 
 Texture2D<float32_t4> gDepthTexture : register(t1); //SRV register=>t
 SamplerState gSamplerPoint : register(s1); //Sampler register=>s
+
+ConstantBuffer<InverseProjectionCBuffer> gInverseProjection : register(b0);
 
 static const float32_t kPrewittHorizonalKernel[3][3] =
 {
@@ -53,9 +60,9 @@ PixelShaderOutPut main(VertexShaderOutput input)
              //3x3ループで現在のtexcoordを算出
             float32_t2 texcoord = input.texcoord + kIndex3x3[x][y] * uvStepSize;
             //4.色に1/9掛けて足す
-            float32_t ndcDepth = gDepthTexture.Sample(gSamplerPoint, texcoord);
+            float32_t ndcDepth = gDepthTexture.Sample(gSamplerPoint, texcoord).x;
             
-            float32_t4 viewSpace = mul(float32_t4(0.0f, 0.0f, ndcDepth, 1.0f));
+            float32_t4 viewSpace = mul(float32_t4(0.0f, 0.0f, ndcDepth, 1.0f),gInverseProjection.inverseProjection);
             float32_t viewZ = viewSpace.z * rcp(viewSpace.w);
             
             difference.x += viewZ * kPrewittHorizonalKernel[x][y];
