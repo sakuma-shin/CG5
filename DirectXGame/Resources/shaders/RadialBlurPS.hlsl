@@ -3,9 +3,6 @@
 Texture2D<float32_t4> gTexture : register(t0); //SRV register=>t
 SamplerState gSampler : register(s0); //Sampler register=>s
 
-Texture2D<float32_t4> gMaskTexture : register(t1); //SRV register=>t
-
-
 
 struct PixelShaderOutPut
 {

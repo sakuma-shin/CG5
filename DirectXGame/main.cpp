@@ -188,6 +188,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// 被写体の準備
 	Model* model = Model::CreateFromOBJ("terrain");
 
+
+	/*uint32_t noiseGH = TextureManager::Load("noise0.png");*/
+	/*Sprite* sprite = Sprite::Create(noiseGH, {0, 0});*/
+
 	WorldTransformEX worldTransform;
 	worldTransform.Initialize();
 	worldTransform.scale_ = Vector3(1.0f, 1.0f, 1.0f);
@@ -271,6 +275,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Model::PreDraw(commandList);
 		model->Draw(worldTransform, camera);
 		Model::PostDraw();
+
+		//Sprite::PreDraw(commandList);
+		//sprite->Draw();
+		//Sprite::PreDraw(commandList);
 
 		// TransitionBarrierを元に戻し,PixelShaderが扱えるようにする
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
