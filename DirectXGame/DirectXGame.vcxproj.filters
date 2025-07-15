@@ -42,6 +42,9 @@
     <ClCompile Include="WorldTransformEX.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="ConstantBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resources\shaders\SpritePS.hlsl">
@@ -79,6 +82,11 @@
     <FxCompile Include="Resources\shaders\VignettePS.hlsl">
       <Filter>シェーダー ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="GaussianFilterPS.hlsl" />
+    <FxCompile Include="Resources\shaders\BoxFilterPS.hlsl" />
+    <FxCompile Include="Resources\shaders\DepthBasedOutlinePS.hlsl" />
+    <FxCompile Include="Resources\shaders\GrayScalePS.hlsl" />
+    <FxCompile Include="Resources\shaders\LuminanceBasedOutlinePS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\shaders\Sprite.hlsli">
@@ -118,6 +126,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="WorldTransformEX.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBuffer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
