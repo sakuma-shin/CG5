@@ -48,7 +48,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// ピクセルシェーダーの読み込みとコンパイル
 
-	const int kNumPS = 7;
+	const int kNumPS = ;
 	Shader ps[kNumPS];
 	const std::wstring PS[kNumPS] = {
 	    L"Resources/shaders/TestPS.hlsl",
@@ -58,6 +58,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		L"Resources/shaders/GaussianFilterPS.hlsl", 
 		L"Resources/shaders/LuminanceBasedOutlinePS.hlsl",
 	    L"Resources/shaders/DepthBasedOutlinePS.hlsl",
+	    L"Resources/shaders/RadialBlurPS.hlsl",
 	};
 	// pipelineStateの作成
 	PipelineState pipelineState[kNumPS];
@@ -226,6 +227,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// 被写体の準備
 	Model* model = Model::CreateFromOBJ("terrain");
 
+
+	/*uint32_t noiseGH = TextureManager::Load("noise0.png");*/
+	/*Sprite* sprite = Sprite::Create(noiseGH, {0, 0});*/
+
 	WorldTransformEX worldTransform;
 	worldTransform.Initialize();
 	worldTransform.scale_ = Vector3(1.0f, 1.0f, 1.0f);
@@ -329,6 +334,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		Model::PreDraw(commandList);
 		model->Draw(worldTransform, camera);
 		Model::PostDraw();
+
+		//Sprite::PreDraw(commandList);
+		//sprite->Draw();
+		//Sprite::PreDraw(commandList);
 
 		// TransitionBarrierを元に戻し,PixelShaderが扱えるようにする
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
