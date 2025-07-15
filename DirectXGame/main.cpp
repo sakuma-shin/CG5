@@ -209,19 +209,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	device->CreateShaderResourceView(depthStencilResource, &depthTextureSrvDesc, depthSrvHandleCPU);
 
 
-	// CBVのためにCPUハンドルをインクリメント
-	srvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 	D3D12_CPU_DESCRIPTOR_HANDLE cbvHandleCPU = srvHandleCPU;
-	cbvHandleCPU.ptr +=device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	cbvHandleCPU.ptr +=2*device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	ConstantBuffer cbViewData;
 	
-	cbViewData.Create(sizeof(ViewData));
+	cbViewData.Create(sizeof(ViewData)*4);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
 	cbvDesc.BufferLocation = cbViewData.GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = (sizeof(ViewData) + 255) & ~255; // 256バイト境界に揃える
+	cbvDesc.SizeInBytes = sizeof(ViewData)*4;
 
 	device->CreateConstantBufferView(&cbvDesc, cbvHandleCPU);
 
@@ -272,11 +269,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		camera.UpdateMatrix();
 		camera.UpdateProjectionMatrix();
 
-		Matrix4x4 projMatrix = camera.matProjection;
-		Matrix4x4 inverseProjMatrix = Inverse(projMatrix); // 自前のInverse関数を使う
+		ViewData* viewData = nullptr;
+		cbViewData.Get()->Map(0, nullptr, reinterpret_cast<void**>(&viewData));
 
-		ViewData* viewData = reinterpret_cast<ViewData*>(cbViewData.Map());
-		viewData->InverseProjection = Transpose(inverseProjMatrix); // HLSL向けに転置
+		viewData->InverseProjection = Inverse(camera.matProjection);
 
 		// 描画開始
 
@@ -359,11 +355,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// 使用するディスクリプタヒープの設定
-		// srvDescriptorHeapとdsvDescriptorHeapを両方設定しようとするとエラーになるため、srvDescriptorHeapのみを設定
-		ID3D12DescriptorHeap* ppHeaps[] = {srvDescriptorHeap};
-		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		ID3D12DescriptorHeap* Heaps[] = {srvDescriptorHeap};
+		commandList->SetDescriptorHeaps(_countof(Heaps), Heaps);
 
-		// SRVのDescriptorTableの先頭を設定 (これでt0とt1の両方をカバーします)
 		commandList->SetGraphicsRootDescriptorTable(0, srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		commandList->SetGraphicsRootConstantBufferView(1, cbViewData.GetGPUVirtualAddress()); // これはb0用です
 		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);

@@ -16,8 +16,6 @@ ConstantBuffer::~ConstantBuffer() {
 }
 
 void ConstantBuffer::Create(UINT size) {
-	// 256バイトアラインメントが必要（D3D12の仕様）
-	size = (size + 255) & ~255;
 
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 
