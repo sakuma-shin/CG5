@@ -32,7 +32,7 @@ void RootSignature::Create() {
 	srvDescRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	//RootParameterの用意 pixelShaderに読ませるために実用
 	//複数指定できるので配列の構造をしている。今回は一つだけなので長さ1の配列として用意する
-	D3D12_ROOT_PARAMETER rootParameters[2]{};
+	D3D12_ROOT_PARAMETER rootParameters[3]{};
 
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -43,6 +43,11 @@ void RootSignature::Create() {
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[1].Descriptor.ShaderRegister = 0; 
 	rootParameters[1].Descriptor.RegisterSpace = 0;
+
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[2].Descriptor.ShaderRegister = 1;
+	rootParameters[2].Descriptor.RegisterSpace = 0;
 
 	descripttionRootSignature.pParameters = rootParameters;
 	descripttionRootSignature.NumParameters = _countof(rootParameters);

@@ -7,12 +7,17 @@
 #include "WorldTransformEX.h"
 #include "kamataEngine.h"
 #include <Windows.h>
+#include <random>
 
 using namespace KamataEngine;
 using namespace MathUtility;
 
 struct ViewData {
 	Matrix4x4 InverseProjection;
+};
+
+struct RandomTime {
+	float time;
 };
 
 // 関数プロトタイプ宣言
@@ -48,7 +53,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// ピクセルシェーダーの読み込みとコンパイル
 
-	const int kNumPS = 8;
+	const int kNumPS = 9;
 	Shader ps[kNumPS];
 	const std::wstring PS[kNumPS] = {
 	    L"Resources/shaders/TestPS.hlsl",
@@ -59,6 +64,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	    L"Resources/shaders/LuminanceBasedOutlinePS.hlsl",
 	    L"Resources/shaders/DepthBasedOutlinePS.hlsl",
 	    L"Resources/shaders/RadialBlurPS.hlsl",
+	    L"Resources/shaders/RandomPS.hlsl",
 	};
 	// pipelineStateの作成
 	PipelineState pipelineState[kNumPS];
@@ -175,7 +181,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_DESCRIPTOR_HEAP_DESC srvDescriptorHeapDesc = {};
 	srvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	srvDescriptorHeapDesc.NumDescriptors = 4;
+	srvDescriptorHeapDesc.NumDescriptors = 5;
 
 	hr = device->CreateDescriptorHeap(&srvDescriptorHeapDesc, IID_PPV_ARGS(&srvDescriptorHeap));
 	assert(SUCCEEDED(hr));
@@ -207,7 +213,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	device->CreateShaderResourceView(depthStencilResource, &depthTextureSrvDesc, depthSrvHandleCPU);
 
-
 	D3D12_CPU_DESCRIPTOR_HANDLE cbvHandleCPU = srvHandleCPU;
 	cbvHandleCPU.ptr += 2 * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -224,6 +229,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	device->CreateConstantBufferView(&cbvDesc, cbvHandleCPU);
 
+	cbvHandleCPU.ptr+=device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	ConstantBuffer cbRandomTime;
+	cbRandomTime.Create(sizeof(RandomTime) * 64);
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbRandomTimeDesc{};
+	cbRandomTimeDesc.BufferLocation = cbRandomTime.GetGPUVirtualAddress();
+	cbRandomTimeDesc.SizeInBytes = sizeof(RandomTime) * 64;
+	device->CreateConstantBufferView(&cbRandomTimeDesc, cbvHandleCPU);
+
 	// アプリで利用する3Dモデル
 	// 被写体の準備
 	Model* model = Model::CreateFromOBJ("terrain");
@@ -236,6 +250,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Camera camera;
 	camera.Initialize();
 	camera.translation_ = Vector3(0.0f, 1.0f, 0.0f);
+
+	
+	std::random_device seeGenerator;
+	std::mt19937 randomEngine(seeGenerator());
+	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 
 	KamataEngine::Input* input = Input::GetInstance();
 	int usePS = 0;
@@ -266,13 +285,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		// Cameraの更新と定数バッファへの転送
 		camera.UpdateMatrix();
-		
 
 		ViewData* viewData = nullptr;
 		cbViewData.Get()->Map(0, nullptr, reinterpret_cast<void**>(&viewData));
 
 		viewData->InverseProjection = Inverse(camera.matProjection);
 
+		RandomTime* randomTime = nullptr;
+		cbRandomTime.Get()->Map(0, nullptr, reinterpret_cast<void**>(&randomTime));
+		randomTime->time = distribution(randomEngine);
 		// 描画開始
 
 		// trabsitionBarrierをSRV=>RTVに設定する
@@ -358,6 +379,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		commandList->SetGraphicsRootDescriptorTable(0, srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		commandList->SetGraphicsRootConstantBufferView(1, cbViewData.GetGPUVirtualAddress()); // これはb0用です
+		commandList->SetGraphicsRootConstantBufferView(2, cbRandomTime.GetGPUVirtualAddress());
 		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0);
 
 		// 描画終了
