@@ -228,9 +228,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// 被写体の準備
 	Model* model = Model::CreateFromOBJ("terrain");
 
-	uint32_t maskGH = TextureManager::Load("noise0.png");
-	Sprite* sprite = Sprite::Create(maskGH, {0, 0});
-
 	WorldTransformEX worldTransform;
 	worldTransform.Initialize();
 	worldTransform.scale_ = Vector3(1.0f, 1.0f, 1.0f);
@@ -269,7 +266,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		// Cameraの更新と定数バッファへの転送
 		camera.UpdateMatrix();
-		camera.UpdateProjectionMatrix();
+		
 
 		ViewData* viewData = nullptr;
 		cbViewData.Get()->Map(0, nullptr, reinterpret_cast<void**>(&viewData));
@@ -326,10 +323,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		commandList->ClearDepthStencilView(dsvHandleCPU, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		// 描画
-
-		Sprite::PreDraw(commandList);
-		sprite->Draw();
-		Sprite::PostDraw();
 
 		Model::PreDraw(commandList);
 		model->Draw(worldTransform, camera);
