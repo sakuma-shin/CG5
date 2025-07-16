@@ -254,7 +254,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	
 	std::random_device seeGenerator;
 	std::mt19937 randomEngine(seeGenerator());
-	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+	std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
 
 	KamataEngine::Input* input = Input::GetInstance();
 	int usePS = 0;

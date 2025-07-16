@@ -21,8 +21,12 @@ PixelShaderOutPut main(VertexShaderOutput input)
     PixelShaderOutPut output;
     
     //乱数生成
-    float32_t random = rand2dTo1d(input.texcoord*gRandomTime.time);
+    float32_t random = rand2dTo1d(input.texcoord * gRandomTime.time);
     
-    output.color = float32_t4(random, random, random, 1.0f);
+    output.color = gTexture.Sample(gSampler, input.texcoord);
+    
+    
+    output.color.rgb *= random;
+    output.color.a = 1.0f;
     return output;
 }
