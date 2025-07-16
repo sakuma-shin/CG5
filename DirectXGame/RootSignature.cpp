@@ -1,27 +1,27 @@
 #include "RootSignature.h"
-#include"KamataEngine.h"
+#include "KamataEngine.h"
 
 using namespace KamataEngine;
 
-//RootSignature生成
+// RootSignature生成
 void RootSignature::Create() {
-	//既にインスタンスがあるなら解放する(Create関数が二回以上実行されたとき用)
+	// 既にインスタンスがあるなら解放する(Create関数が二回以上実行されたとき用)
 	if (rootSignature_) {
 		rootSignature_->Release();
 		rootSignature_ = nullptr;
 	}
 
-	//クラス内で取得するために追加
+	// クラス内で取得するために追加
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 
 	// RootSignature作成
 	// 構造体にデータを用意する
 	D3D12_ROOT_SIGNATURE_DESC descripttionRootSignature{};
 	descripttionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	
-	//デスクリプタレンジ
+
+	// デスクリプタレンジ
 	D3D12_DESCRIPTOR_RANGE srvDescRange[2]{};
-	//t0レジスタを利用可能にする
+	// t0レジスタを利用可能にする
 	srvDescRange[0].BaseShaderRegister = 0;
 	srvDescRange[0].NumDescriptors = 1;
 	srvDescRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -30,8 +30,8 @@ void RootSignature::Create() {
 	srvDescRange[1].NumDescriptors = 1;
 	srvDescRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	srvDescRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-	//RootParameterの用意 pixelShaderに読ませるために実用
-	//複数指定できるので配列の構造をしている。今回は一つだけなので長さ1の配列として用意する
+	// RootParameterの用意 pixelShaderに読ませるために実用
+	// 複数指定できるので配列の構造をしている。今回は一つだけなので長さ1の配列として用意する
 	D3D12_ROOT_PARAMETER rootParameters[3]{};
 
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -41,7 +41,7 @@ void RootSignature::Create() {
 
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[1].Descriptor.ShaderRegister = 0; 
+	rootParameters[1].Descriptor.ShaderRegister = 0;
 	rootParameters[1].Descriptor.RegisterSpace = 0;
 
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -51,8 +51,8 @@ void RootSignature::Create() {
 
 	descripttionRootSignature.pParameters = rootParameters;
 	descripttionRootSignature.NumParameters = _countof(rootParameters);
-	
-	//Samplerの実装
+
+	// Samplerの実装
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[2] = {};
 	staticSamplers[0].Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
 	staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -83,30 +83,32 @@ void RootSignature::Create() {
 	if (FAILED(hr)) {
 		DebugText::GetInstance()->ConsolePrintf(reinterpret_cast<char*>(errorBlog->GetBufferPointer()));
 
+#ifdef DEBUG
 		assert(false);
+#endif
 	}
 
 	// バイナリをもとに作成
 	ID3D12RootSignature* rootSignature = nullptr;
 	hr = dxCommon->GetDevice()->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+#ifdef DEBUG
 	assert(SUCCEEDED(hr));
+#endif
 
-	//signatureBlobはRootSignatureの生成後解放してもいい
+	// signatureBlobはRootSignatureの生成後解放してもいい
 	signatureBlob->Release();
 
-	//生成したRootSignatureを取っておく
+	// 生成したRootSignatureを取っておく
 	rootSignature_ = rootSignature;
-	
 }
-
 
 ID3D12RootSignature* RootSignature::Get() { return rootSignature_; }
 
 RootSignature::RootSignature() {}
 
 RootSignature::~RootSignature() {
-	if (rootSignature_){
+	if (rootSignature_) {
 		rootSignature_->Release();
 		rootSignature_ = nullptr;
-	} 
+	}
 }

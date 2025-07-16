@@ -49,7 +49,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// 頂点シェーダーの読み込みとコンパイル
 	Shader vs;
 	vs.LoadDxc(L"Resources/shaders/TestVS.hlsl", L"vs_6_0");
+#ifdef DEBUG
 	assert(vs.GetDxcBlob() != nullptr);
+#endif // DEBUG
 
 	// ピクセルシェーダーの読み込みとコンパイル
 
@@ -71,8 +73,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	for (int i = 0; i < kNumPS; i++) {
 		ps[i].LoadDxc(PS[i], L"ps_6_0");
+#ifdef DEBUG
 		assert(ps[i].GetDxcBlob() != nullptr);
-
+#endif // DEBUG
 		SetupPipeLineState(pipelineState[i], rs, vs, ps[i]);
 	}
 
@@ -136,7 +139,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	rtvDescriptorHeapDesc.NumDescriptors = 1;
 
 	hr = device->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(&rtvDescriptorHeap));
+#ifdef DEBUG
 	assert(SUCCEEDED(hr));
+#endif // DEBUG
 
 	// CPU側から見たHANDLEを取得しておく
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandleCPU = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
@@ -159,7 +164,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	dsvDescriptorHeapDesc.NumDescriptors = 1;
 	dsvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	hr = device->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(&dsvDescriptorHeap));
+#ifdef DEBUG
 	assert(SUCCEEDED(hr));
+#endif // DEBUG
+
+
 
 	// CPU側から見たHandleを取得しておく
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandleCPU = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
@@ -184,7 +193,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	srvDescriptorHeapDesc.NumDescriptors = 5;
 
 	hr = device->CreateDescriptorHeap(&srvDescriptorHeapDesc, IID_PPV_ARGS(&srvDescriptorHeap));
+#ifdef DEBUG
 	assert(SUCCEEDED(hr));
+#endif // DEBUG
 
 	// CPU側から見たHANDLE,GPU側から見たHANDLEを取得しておく
 	D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCPU = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
@@ -229,7 +240,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	device->CreateConstantBufferView(&cbvDesc, cbvHandleCPU);
 
-	cbvHandleCPU.ptr+=device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	cbvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	ConstantBuffer cbRandomTime;
 	cbRandomTime.Create(sizeof(RandomTime) * 64);
@@ -251,7 +262,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	camera.Initialize();
 	camera.translation_ = Vector3(0.0f, 1.0f, 0.0f);
 
-	
 	std::random_device seeGenerator;
 	std::mt19937 randomEngine(seeGenerator());
 	std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
@@ -482,15 +492,16 @@ ID3D12Resource* CreateRenderTextureResource(ID3D12Device* device, uint32_t width
 
 	// 4. RenderTextureResourceの生成
 	ID3D12Resource* resource = nullptr;
-	HRESULT hr = device->CreateCommittedResource(
+	[[maybe_unused]] HRESULT hr = device->CreateCommittedResource(
 	    &heapPropaties,                             // Heapのプロパティ
 	    D3D12_HEAP_FLAG_NONE,                       // Heapの特殊な設定
 	    &resourceDesc,                              // Resourceの設定
 	    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, // pixelShaderでアクセスできるようにする
 	    &clearValue,                                // Clear最速値
 	    IID_PPV_ARGS(&resource));
-
+#ifdef DEBUG
 	assert(SUCCEEDED(hr));
+#endif // DEBUG
 
 	return resource;
 }
@@ -521,9 +532,12 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 
 	// 3.Resourceの生成
 	ID3D12Resource* resource = nullptr;
-	HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, &depthClearValue, IID_PPV_ARGS(&resource));
+	[[maybe_unused]] HRESULT hr =
+	    device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, &depthClearValue, IID_PPV_ARGS(&resource));
 
+#ifdef DEBUG
 	assert(SUCCEEDED(hr));
+#endif // DEBUG
 
 	return resource;
 }
