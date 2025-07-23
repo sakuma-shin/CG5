@@ -95,9 +95,9 @@ void RootSignature::Create() {
 	if (FAILED(hr)) {
 		DebugText::GetInstance()->ConsolePrintf(reinterpret_cast<char*>(errorBlog->GetBufferPointer()));
 
-
+#ifdef DEBUG
 		assert(false);
-
+#endif // DEBUG
 	}
 
 	// バイナリをもとに作成

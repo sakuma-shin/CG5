@@ -10,6 +10,7 @@
 #include "kamataEngine.h"
 #include <Windows.h>
 #include <random>
+#include<cassert>
 
 using namespace KamataEngine;
 using namespace MathUtility;
@@ -652,7 +653,7 @@ ID3D12Resource* CreateTextureResource(ID3D12Device* device, const DirectX::TexMe
 	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;          // プロセッサの近くに配置
 	// 3.Resourceを生成する
 	ID3D12Resource* resource = nullptr;
-	HRESULT hr = device->CreateCommittedResource(
+	[[maybe_unused]] HRESULT hr = device->CreateCommittedResource(
 	    &heapProperties,                   // Heapの設定
 	    D3D12_HEAP_FLAG_NONE,              // heapの特殊な設定　特になし
 	    &resourceDesc,                     // Resourceの設定
@@ -671,7 +672,7 @@ void UpLoadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mip
 		// MipMapLevelを指定して各Imageを取得
 		const DirectX::Image* img = mipImages.GetImage(mipLevel, 0, 0);
 		// Textureに転送
-		HRESULT hr = texture->WriteToSubresource(
+		[[maybe_unused]]HRESULT hr = texture->WriteToSubresource(
 		    UINT(mipLevel),
 		    nullptr,             // 全領域へコピー
 		    img->pixels,         // 元データアドレス
