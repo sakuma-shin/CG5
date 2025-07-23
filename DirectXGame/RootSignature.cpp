@@ -20,19 +20,21 @@ void RootSignature::Create() {
 	descripttionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	// デスクリプタレンジ
-	D3D12_DESCRIPTOR_RANGE srvDescRange[2]{};
+	D3D12_DESCRIPTOR_RANGE srvDescRange[1]{};
 	// t0レジスタを利用可能にする
 	srvDescRange[0].BaseShaderRegister = 0;
 	srvDescRange[0].NumDescriptors = 1;
 	srvDescRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	srvDescRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-	srvDescRange[1].BaseShaderRegister = 1;
-	srvDescRange[1].NumDescriptors = 1;
-	srvDescRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	srvDescRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	// maskTexture用の新しいディスクリプタレンジ (t1に配置することを想定)
+	D3D12_DESCRIPTOR_RANGE maskSrvDescRange[1]{};
+	maskSrvDescRange[0].BaseShaderRegister = 1; // t1 レジスタ
+	maskSrvDescRange[0].NumDescriptors = 1;
+	maskSrvDescRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	maskSrvDescRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	// RootParameterの用意 pixelShaderに読ませるために実用
-	// 複数指定できるので配列の構造をしている。今回は一つだけなので長さ1の配列として用意する
-	D3D12_ROOT_PARAMETER rootParameters[3]{};
+	// 複数指定できるので配列の構造をしている。
+	D3D12_ROOT_PARAMETER rootParameters[5]{};
 
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -48,6 +50,16 @@ void RootSignature::Create() {
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[2].Descriptor.ShaderRegister = 1;
 	rootParameters[2].Descriptor.RegisterSpace = 0;
+
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[3].DescriptorTable.pDescriptorRanges = maskSrvDescRange;
+	rootParameters[3].DescriptorTable.NumDescriptorRanges = _countof(maskSrvDescRange);
+
+	rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[4].Descriptor.ShaderRegister = 2;
+	rootParameters[4].Descriptor.RegisterSpace = 0;
 
 	descripttionRootSignature.pParameters = rootParameters;
 	descripttionRootSignature.NumParameters = _countof(rootParameters);
@@ -83,9 +95,9 @@ void RootSignature::Create() {
 	if (FAILED(hr)) {
 		DebugText::GetInstance()->ConsolePrintf(reinterpret_cast<char*>(errorBlog->GetBufferPointer()));
 
-#ifdef DEBUG
+
 		assert(false);
-#endif
+
 	}
 
 	// バイナリをもとに作成
